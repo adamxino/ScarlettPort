@@ -1,0 +1,24 @@
+name: Build ScarlettPort
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build XCL runtime
+        working-directory: runtime/xcl
+        run: cargo build --release
+      - name: Build VIctory runtime
+        working-directory: runtime/victory
+        run: cargo build --release -p victory
+      - name: Package files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/runtime/xcl/target/release, dist/runtime/victory/target/release | Out-Null
+          Copy-Item runtime/xcl/target/release/xcl.exe dist/runtime/xcl/target/release/
+          Copy-Item runtime/victory/target/release/victory.exe dist/runtime/victory/target/release/
+          Copy-Item -Recurse scripts, docs, launcher, assets dist/ -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scarlettport-windows
+          path: dist/
